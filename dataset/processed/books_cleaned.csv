@@ -1,0 +1,51 @@
+book_id,title,author,category,isbn,publication_year,total_copies,available_copies,price
+B101,Designing Data-Intensive Applications,Martin Kleppmann,Computer Science,978-1449373320,2017,8,8,46.97
+B102,Clean Code,Robert C. Martin,Computer Science,978-0132350884,2008,6,6,16.25
+B103,Introduction to Algorithms,Thomas H. Cormen,Computer Science,978-0262033848,2009,5,5,28.75
+B104,Hands-On Machine Learning with Scikit-Learn,Aurelien Geron,Data Science,978-1492032649,2019,7,7,26.16
+B105,Python for Data Analysis,Wes McKinney,Data Science,978-1491957660,2017,9,9,51.82
+B106,Deep Learning,Ian Goodfellow,Data Science,978-0262035613,2016,4,4,48.83
+B107,Storytelling with Data,Cole Nussbaumer Knaflic,Data Science,978-1119002253,2015,6,6,59.61
+B108,The Pragmatic Programmer,Andrew Hunt,Computer Science,978-0201616224,1999,5,5,19.35
+B109,Database System Concepts,Abraham Silberschatz,Computer Science,978-0073523323,2010,6,6,36.1
+B110,SQL Antipatterns,Bill Karwin,Computer Science,978-1934356555,2010,4,4,16.49
+B111,To Kill a Mockingbird,Harper Lee,Fiction,978-0060935467,1960,10,10,25.93
+B112,1984,George Orwell,Fiction,978-0451524935,1949,10,10,40.27
+B113,The Great Gatsby,F. Scott Fitzgerald,Fiction,978-0743273565,1925,7,7,16.33
+B114,Brave New World,Aldous Huxley,Fiction,978-0060850524,1932,6,6,24.94
+B115,Crime and Punishment,Fyodor Dostoevsky,Fiction,978-0143107637,1866,5,5,47.49
+B116,The Catcher in the Rye,J.D. Salinger,Fiction,978-0316769488,1951,6,6,42.25
+B117,Pride and Prejudice,Jane Austen,Fiction,978-0141439518,1813,8,8,26.02
+B118,Meditations,Marcus Aurelius,Philosophy,978-0812968255,2002,7,7,44.46
+B119,Beyond Good and Evil,Friedrich Nietzsche,Philosophy,978-0140449235,1886,4,4,55.47
+B120,The Republic,Plato,Philosophy,978-0140455113,2003,5,5,15.32
+B121,Critique of Pure Reason,Immanuel Kant,Philosophy,978-0521657297,1999,3,3,55.29
+B122,Sapiens: A Brief History of Humankind,Yuval Noah Harari,History,978-0062316097,2014,12,12,49.91
+B123,"Guns, Germs, and Steel",Jared Diamond,History,978-0393317558,1997,6,6,32.01
+B124,The Silk Roads,Peter Frankopan,History,978-1101912379,2015,5,5,22.77
+B125,A People's History of the United States,Howard Zinn,History,978-0062397348,2005,5,5,62.86
+B126,Zero to One,Peter Thiel,Business & Finance,978-0804139298,2014,8,8,31.83
+B127,The Intelligent Investor,Benjamin Graham,Business & Finance,978-0060555665,2003,7,7,19.64
+B128,Principles: Life and Work,Ray Dalio,Business & Finance,978-1501124020,2017,6,6,19.84
+B129,"Thinking, Fast and Slow",Daniel Kahneman,Psychology,978-0374533557,2011,10,10,57.37
+B130,Atomic Habits,James Clear,Psychology,978-0735211292,2018,14,14,45.19
+B131,Man's Search for Meaning,Viktor E. Frankl,Psychology,978-0807014295,2006,9,9,55.36
+B132,Influence: The Psychology of Persuasion,Robert B. Cialdini,Psychology,978-0061241895,2006,7,7,51.49
+B133,A Brief History of Time,Stephen Hawking,Science & Physics,978-0553380163,1998,8,8,41.81
+B134,Cosmos,Carl Sagan,Science & Physics,978-0345539434,2013,6,6,63.66
+B135,The Elegant Universe,Brian Greene,Science & Physics,978-0393058581,2003,5,5,33.93
+B136,Astrophysics for People in a Hurry,Neil deGrasse Tyson,Science & Physics,978-0393609394,2017,8,8,42.6
+B137,Structure and Interpretation of Computer Programs,Harold Abelson,Computer Science,978-0262510875,1996,4,4,56.47
+B138,Artificial Intelligence: A Modern Approach,Stuart Russell,Computer Science,978-0136042594,2020,6,6,45.93
+B139,Data Science from Scratch,Joel Grus,Data Science,978-1492041139,2019,7,7,58.09
+B140,Practical Statistics for Data Scientists,Peter Bruce,Data Science,978-1492072942,2020,6,6,43.87
+B141,The Hobbit,J.R.R. Tolkien,Fiction,978-0547928227,1937,9,9,50.23
+B142,Fahrenheit 451,Ray Bradbury,Fiction,978-1451673319,1953,6,6,17.29
+B143,Dune,Frank Herbert,Fiction,978-0441172719,1965,8,8,26.39
+B144,Letters from a Stoic,Seneca,Philosophy,978-0140442106,2004,5,5,29.47
+B145,The Lessons of History,Will Durant,History,978-1439149950,2010,4,4,18.99
+B146,Good to Great,Jim Collins,Business & Finance,978-0066620992,2001,7,7,26.64
+B147,Rich Dad Poor Dad,Robert T. Kiyosaki,Business & Finance,978-1612680194,2017,10,10,20.05
+B148,The Psychology of Money,Morgan Housel,Business & Finance,978-0857197689,2020,11,11,28.9
+B149,Flow: The Psychology of Optimal Experience,Mihaly Csikszentmihalyi,Psychology,978-0061339202,2008,6,6,46.78
+B150,Six Easy Pieces,Richard P. Feynman,Science & Physics,978-0465025275,2011,5,5,33.24
