@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L.BRARY - Dynamic Library Management System</title>
+    <!-- Google Fonts: Fredoka & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <!-- Floating Alert Toast -->
+    <div id="alertBox" class="alert-box"></div>
+
+    <!-- Top Retro Pop Navigation -->
+    <header class="retro-nav-wrapper">
+        <nav class="retro-nav">
+            <div class="nav-brand">
+                <div class="brand-avatar">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-title">L.BRARY</h1>
+                    <span class="brand-tagline">Relational Database System</span>
+                </div>
+            </div>
+
+            <!-- Pill Navigation Tabs -->
+            <div class="nav-pill-group">
+                <button class="nav-pill active" onclick="switchTab('dashboard')">
+                    Dashboard
+                </button>
+                <button class="nav-pill" onclick="switchTab('books')">
+                    Books Catalog
+                </button>
+                <button class="nav-pill" onclick="switchTab('members')">
+                    Patrons
+                </button>
+                <button class="nav-pill" onclick="switchTab('circulation')">
+                    Issue & Return
+                </button>
+            </div>
+
+            <div class="nav-actions">
+                <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Light / Dark Mode">
+                    <span id="themeToggleIcon" class="theme-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                    </span>
+                    <span id="themeToggleText">DARK MODE</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Canvas -->
+    <main class="app-canvas">
+
+        <!-- ================= 1. DASHBOARD ================= -->
+        <section id="tab-dashboard" class="tab-pane active">
+            <!-- Hero Banner Section -->
+            <div class="hero-card">
+                <div class="hero-left">
+                    <span class="mini-badge">ACADEMIC DBMS EDITION</span>
+                    <h2 class="hero-heading">SERIOUS ABOUT BOOKS,<br><span class="highlight-yellow">DYNAMIC IN EVERY TRANSACTION</span></h2>
+                    <div class="hero-buttons">
+                        <button class="pop-btn btn-yellow" onclick="switchTab('circulation')">
+                            Issue A Book
+                        </button>
+                        <button class="pop-btn btn-cream" onclick="switchTab('books')">
+                            Explore Catalog
+                        </button>
+                    </div>
+                </div>
+                <div class="hero-right">
+                    <div class="hero-art-showcase">
+                        <svg class="hero-book-svg" viewBox="0 0 240 195" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Base Shadow -->
+                            <ellipse cx="120" cy="180" rx="95" ry="10" fill="var(--border-color)" opacity="0.25"/>
+                            
+                            <!-- Bottom Book (Purple Volume) -->
+                            <rect x="35" y="142" width="170" height="26" rx="6" fill="#845ec2" stroke="var(--border-color)" stroke-width="3"/>
+                            <rect x="46" y="148" width="148" height="14" rx="3" fill="#6a44a4"/>
+                            <line x1="62" y1="142" x2="62" y2="168" stroke="var(--border-color)" stroke-width="2.5"/>
+                            <line x1="72" y1="142" x2="72" y2="168" stroke="var(--border-color)" stroke-width="2.5"/>
+                            
+                            <!-- Middle Book (Cyan Volume) -->
+                            <rect x="45" y="116" width="150" height="26" rx="6" fill="#00d2d3" stroke="var(--border-color)" stroke-width="3"/>
+                            <rect x="56" y="122" width="128" height="14" rx="3" fill="#00b4b5"/>
+                            <line x1="74" y1="116" x2="74" y2="142" stroke="var(--border-color)" stroke-width="2.5"/>
+                            <!-- Hanging Bookmark Ribbon -->
+                            <path d="M162 142 L162 162 L170 154 L178 162 L178 142 Z" fill="#ff80a5" stroke="var(--border-color)" stroke-width="2"/>
+                            
+                            <!-- Top Book (Pink Volume) -->
+                            <rect x="58" y="90" width="124" height="26" rx="6" fill="#ff80a5" stroke="var(--border-color)" stroke-width="3"/>
+                            <rect x="68" y="96" width="104" height="14" rx="3" fill="#e36387"/>
+                            <line x1="86" y1="90" x2="86" y2="116" stroke="var(--border-color)" stroke-width="2.5"/>
+                            
+                            <!-- Open Book Resting on Top -->
+                            <!-- Left Page -->
+                            <path d="M60 48 C 80 40, 105 45, 120 54 L 120 86 C 105 77, 80 72, 60 80 Z" fill="#fffdf9" stroke="var(--border-color)" stroke-width="3" stroke-linejoin="round"/>
+                            <path d="M68 56 C 82 50, 100 54, 112 60" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M68 64 C 82 58, 100 62, 112 68" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M68 72 C 82 66, 100 70, 112 76" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+                            
+                            <!-- Right Page -->
+                            <path d="M180 48 C 160 40, 135 45, 120 54 L 120 86 C 135 77, 160 72, 180 80 Z" fill="#fffdf9" stroke="var(--border-color)" stroke-width="3" stroke-linejoin="round"/>
+                            <path d="M172 56 C 158 50, 140 54, 128 60" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M172 64 C 158 58, 140 62, 128 68" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M172 72 C 158 66, 140 70, 128 76" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+                            
+                            <!-- Spine Center Hinge -->
+                            <line x1="120" y1="54" x2="120" y2="86" stroke="var(--border-color)" stroke-width="3"/>
+                            
+                            <!-- Vector Geometric Sparkles -->
+                            <path d="M28 42 L32 30 L42 34 L32 38 Z" fill="#fed136" stroke="var(--border-color)" stroke-width="1.5"/>
+                            <path d="M206 68 L209 60 L217 63 L209 66 Z" fill="#fed136" stroke="var(--border-color)" stroke-width="1.5"/>
+                            <circle cx="212" cy="115" r="4" fill="#00d2d3" stroke="var(--border-color)" stroke-width="1.5"/>
+                            <circle cx="32" cy="108" r="3.5" fill="#ff80a5" stroke="var(--border-color)" stroke-width="1.5"/>
+                        </svg>
+                        
+                        <div class="hero-art-badge">
+                            <span class="art-badge-title">CATALOG VAULT</span>
+                            <span id="heroBadgeSub" class="art-badge-sub">50 TITLES • ACTIVE CIRCULATION</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Metric Cards Header & Grid -->
+            <div class="kpi-section-header">
+                <div class="section-title-wrap">
+                    <span class="badge-tag bg-yellow">LIVE DATABASE METRICS</span>
+                    <h3 class="section-heading">Real-Time Inventory & Circulation Stats</h3>
+                </div>
+            </div>
+
+            <!-- KPI Metric Cards Grid -->
+            <div class="kpi-grid">
+                <div class="pop-kpi-card card-purple">
+                    <div class="kpi-top">
+                        <span class="kpi-label">TOTAL TITLES</span>
+                    </div>
+                    <div class="kpi-value" id="statTotalTitles">0</div>
+                    <div class="kpi-footer">Unique Catalog Books</div>
+                </div>
+
+                <div class="pop-kpi-card card-yellow">
+                    <div class="kpi-top">
+                        <span class="kpi-label">COPIES ON SHELF</span>
+                    </div>
+                    <div class="kpi-value" id="statAvailableCopies">0</div>
+                    <div class="kpi-footer">Available for Check-out</div>
+                </div>
+
+                <div class="pop-kpi-card card-pink">
+                    <div class="kpi-top">
+                        <span class="kpi-label">ACTIVE PATRONS</span>
+                    </div>
+                    <div class="kpi-value" id="statActiveMembers">0</div>
+                    <div class="kpi-footer">Registered Members</div>
+                </div>
+
+                <div class="pop-kpi-card card-cyan">
+                    <div class="kpi-top">
+                        <span class="kpi-label">CURRENTLY BORROWED</span>
+                    </div>
+                    <div class="kpi-value" id="statCurrentlyIssued">0</div>
+                    <div class="kpi-footer">Books Currently Issued</div>
+                </div>
+
+                <div class="pop-kpi-card card-orange">
+                    <div class="kpi-top">
+                        <span class="kpi-label">OVERDUE FINES</span>
+                    </div>
+                    <div class="kpi-value" id="statUnpaidFines">$0.00</div>
+                    <div class="kpi-footer">Pending Unpaid Penalties</div>
+                </div>
+            </div>
+
+            <!-- Dashboard Active Loans Table -->
+            <div class="retro-box mt-4">
+                <div class="box-header">
+                    <div class="box-title">
+                        <span class="badge-tag">CIRCULATION</span>
+                        <h3>Currently Issued Books</h3>
+                    </div>
+                </div>
+                <div class="retro-table-scroll">
+                    <table class="retro-table" id="dashboardIssuedTable">
+                        <thead>
+                            <tr>
+                                <th>Borrow ID</th>
+                                <th>Book Title</th>
+                                <th>Patron</th>
+                                <th>Issue Date</th>
+                                <th>Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 2. BOOKS CATALOG ================= -->
+        <section id="tab-books" class="tab-pane">
+            <div class="page-header-box">
+                <div>
+                    <span class="badge-tag">CATALOG DESK</span>
+                    <h2>Book Inventory Management</h2>
+                    <p>Search books, monitor shelf availability, and register new inventory.</p>
+                </div>
+            </div>
+
+            <!-- Add Book Form Box -->
+            <div class="retro-box mb-4">
+                <div class="box-header">
+                    <div class="box-title">
+                        <span class="badge-tag bg-pink">NEW INVENTORY</span>
+                        <h3>Add Book to Catalog</h3>
+                    </div>
+                </div>
+                <form id="addBookForm" onsubmit="handleAddBook(event)" class="retro-form-grid">
+                    <div class="retro-field">
+                        <label>Book ID *</label>
+                        <input type="text" id="b_id" placeholder="e.g. B151" required>
+                    </div>
+                    <div class="retro-field">
+                        <label>Book Title *</label>
+                        <input type="text" id="b_title" placeholder="e.g. Clean Architecture" required>
+                    </div>
+                    <div class="retro-field">
+                        <label>Author *</label>
+                        <input type="text" id="b_author" placeholder="e.g. Robert C. Martin" required>
+                    </div>
+                    <div class="retro-field">
+                        <label>Category</label>
+                        <select id="b_category">
+                            <option>Computer Science</option>
+                            <option>Data Science</option>
+                            <option>Fiction</option>
+                            <option>Philosophy</option>
+                            <option>Business & Finance</option>
+                            <option>Psychology</option>
+                            <option>History</option>
+                            <option>Science & Physics</option>
+                        </select>
+                    </div>
+                    <div class="retro-field">
+                        <label>ISBN</label>
+                        <input type="text" id="b_isbn" placeholder="978-0134494166">
+                    </div>
+                    <div class="retro-field">
+                        <label>Publication Year</label>
+                        <input type="number" id="b_year" value="2024" min="1500" max="2030">
+                    </div>
+                    <div class="retro-field">
+                        <label>Total Copies</label>
+                        <input type="number" id="b_copies" value="5" min="1">
+                    </div>
+                    <div class="retro-field">
+                        <label>Replacement Cost ($)</label>
+                        <input type="number" id="b_price" value="29.99" min="0" step="0.01">
+                    </div>
+                    <div class="retro-form-btn-bar">
+                        <button type="submit" class="pop-btn btn-yellow">
+                            Save Book to Database
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Books Table Box -->
+            <div class="retro-box">
+                <div class="box-header flex-split">
+                    <div class="box-title">
+                        <span class="badge-tag bg-yellow">INVENTORY</span>
+                        <h3>Library Titles</h3>
+                    </div>
+                    <div class="search-capsule">
+                        <input type="text" id="bookSearchInput" placeholder="Filter by title, author, category..." onkeyup="handleBookSearch()">
+                    </div>
+                </div>
+                <div class="retro-table-scroll">
+                    <table class="retro-table" id="booksTable">
+                        <thead>
+                            <tr>
+                                <th>Book ID</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>Category</th>
+                                <th>Total</th>
+                                <th>Available</th>
+                                <th>Price</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 3. MEMBERS ================= -->
+        <section id="tab-members" class="tab-pane">
+            <div class="page-header-box">
+                <div>
+                    <span class="badge-tag">DIRECTORY</span>
+                    <h2>Patrons & Library Members</h2>
+                    <p>Register new library patrons and manage accounts.</p>
+                </div>
+            </div>
+
+            <!-- Register Member Form Box -->
+            <div class="retro-box mb-4">
+                <div class="box-header">
+                    <div class="box-title">
+                        <span class="badge-tag bg-pink">REGISTRATION</span>
+                        <h3>Register New Patron</h3>
+                    </div>
+                </div>
+                <form id="addMemberForm" onsubmit="handleAddMember(event)" class="retro-form-grid">
+                    <div class="retro-field">
+                        <label>Member ID *</label>
+                        <input type="text" id="m_id" placeholder="e.g. M151" required>
+                    </div>
+                    <div class="retro-field">
+                        <label>First Name *</label>
+                        <input type="text" id="m_fname" placeholder="e.g. Rahul" required>
+                    </div>
+                    <div class="retro-field">
+                        <label>Last Name *</label>
+                        <input type="text" id="m_lname" placeholder="e.g. Sharma" required>
+                    </div>
+                    <div class="retro-field">
+                        <label>Membership Tier</label>
+                        <select id="m_type">
+                            <option>Student</option>
+                            <option>Faculty</option>
+                            <option>General</option>
+                            <option>Premium</option>
+                        </select>
+                    </div>
+                    <div class="retro-field">
+                        <label>Email Address *</label>
+                        <input type="email" id="m_email" placeholder="rahul@college.edu" required>
+                    </div>
+                    <div class="retro-field">
+                        <label>Phone Number</label>
+                        <input type="text" id="m_phone" placeholder="9876543210">
+                    </div>
+                    <div class="retro-form-btn-bar">
+                        <button type="submit" class="pop-btn btn-pink">
+                            Complete Registration
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Members Table Box -->
+            <div class="retro-box">
+                <div class="box-header">
+                    <div class="box-title">
+                        <span class="badge-tag bg-cyan">MEMBERS</span>
+                        <h3>All Registered Patrons</h3>
+                    </div>
+                </div>
+                <div class="retro-table-scroll">
+                    <table class="retro-table" id="membersTable">
+                        <thead>
+                            <tr>
+                                <th>Member ID</th>
+                                <th>Full Name</th>
+                                <th>Tier</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Joined</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 4. CIRCULATION ================= -->
+        <section id="tab-circulation" class="tab-pane">
+            <div class="page-header-box">
+                <div>
+                    <span class="badge-tag">CIRCULATION DESK</span>
+                    <h2>Check-Out & Return Counter</h2>
+                    <p>Issue books (stock decreases by 1) or accept returns (calculates overdue fines automatically).</p>
+                </div>
+            </div>
+
+            <div class="retro-dual-grid mb-4">
+                <!-- Check-Out Box -->
+                <div class="retro-box card-tint-yellow">
+                    <div class="box-header">
+                        <div class="box-title">
+                            <span class="badge-tag bg-yellow">CHECK-OUT</span>
+                            <h3>Issue a Book</h3>
+                        </div>
+                    </div>
+                    <form id="issueBookForm" onsubmit="handleIssueBook(event)" class="retro-form-stack">
+                        <div class="retro-field">
+                            <label>Select Patron / Member *</label>
+                            <select id="issueMemberSelect" required></select>
+                        </div>
+                        <div class="retro-field">
+                            <label>Select Book (In Stock Only) *</label>
+                            <select id="issueBookSelect" required></select>
+                        </div>
+                        <div class="retro-field">
+                            <label>Due Date * (Default 14 Days)</label>
+                            <input type="date" id="issueDueDate" required>
+                        </div>
+                        <button type="submit" class="pop-btn btn-yellow btn-full">
+                            Confirm & Check Out Book
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Return Box -->
+                <div class="retro-box card-tint-pink">
+                    <div class="box-header">
+                        <div class="box-title">
+                            <span class="badge-tag bg-pink">CHECK-IN</span>
+                            <h3>Return a Book</h3>
+                        </div>
+                    </div>
+                    <form id="returnBookForm" onsubmit="handleReturnBook(event)" class="retro-form-stack">
+                        <div class="retro-field">
+                            <label>Select Active Borrow Transaction *</label>
+                            <select id="returnBorrowSelect" onchange="updateReturnFinePreview()" required></select>
+                        </div>
+                        <div class="retro-field">
+                            <label>Actual Return Date</label>
+                            <input type="date" id="returnActualDate" onchange="updateReturnFinePreview()" oninput="updateReturnFinePreview()" required>
+                        </div>
+                        <div class="retro-field">
+                            <label>Late Penalty Rate ($ / Day)</label>
+                            <input type="number" id="returnFineRate" value="2.00" step="0.5" min="0" onchange="updateReturnFinePreview()" oninput="updateReturnFinePreview()">
+                        </div>
+
+                        <!-- Real-Time Auto-Calculated Penalty Preview Box -->
+                        <div id="returnFinePreviewBox" class="fine-preview-card">
+                            <div class="preview-header">
+                                <span class="preview-tag">AUTOMATED CALCULATION</span>
+                                <span id="previewDaysLateBadge" class="badge-pill badge-in-stock">ON TIME</span>
+                            </div>
+                            <div class="preview-details">
+                                <div class="preview-row">
+                                    <span>Expected Due Date:</span>
+                                    <strong id="previewDueDate">-</strong>
+                                </div>
+                                <div class="preview-row">
+                                    <span>Overdue Duration:</span>
+                                    <strong id="previewOverdueDays">0 Days Late</strong>
+                                </div>
+                                <div class="preview-row total-row">
+                                    <span>Calculated Penalty:</span>
+                                    <strong id="previewFineAmount" class="highlight-fine">$0.00</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="pop-btn btn-pink btn-full">
+                            Process Return & Check Fine
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Active Borrowings Table Box -->
+            <div class="retro-box">
+                <div class="box-header">
+                    <div class="box-title">
+                        <span class="badge-tag bg-purple">ACTIVE LOANS</span>
+                        <h3>Currently Issued Books</h3>
+                    </div>
+                </div>
+                <div class="retro-table-scroll">
+                    <table class="retro-table" id="activeBorrowingTable">
+                        <thead>
+                            <tr>
+                                <th>Borrow ID</th>
+                                <th>Book Title</th>
+                                <th>Patron Name</th>
+                                <th>Borrow Date</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Overdue Fines & Penalties Ledger Box (Integrated with Circulation) -->
+            <div class="retro-box mt-4">
+                <div class="box-header">
+                    <div class="box-title">
+                        <span class="badge-tag bg-orange">PENALTY AUDIT</span>
+                        <h3>Overdue Fines & Penalty Settlements</h3>
+                    </div>
+                </div>
+                <div class="retro-table-scroll">
+                    <table class="retro-table" id="finesTable">
+                        <thead>
+                            <tr>
+                                <th>Fine ID</th>
+                                <th>Borrow ID</th>
+                                <th>Patron Name</th>
+                                <th>Penalty ($)</th>
+                                <th>Assessed Date</th>
+                                <th>Payment Status</th>
+                                <th>Paid Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
