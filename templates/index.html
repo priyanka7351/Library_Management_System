@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+    <h1>Library Management System</h1>
+</header>
+
+<nav>
+    <button onclick="showTab('dashboard')">Dashboard</button>
+    <button onclick="showTab('books')">Books</button>
+    <button onclick="showTab('members')">Members</button>
+    <button onclick="showTab('circulation')">Issue / Return</button>
+    <button onclick="showTab('fines')">Fines</button>
+</nav>
+
+<main>
+
+<!-- Dashboard -->
+<section id="dashboard" class="tab">
+    <h2>Dashboard</h2>
+
+    <div class="cards">
+        <div class="card">
+            <h3>Total Books</h3>
+            <p id="total-books">0</p>
+        </div>
+
+        <div class="card">
+            <h3>Members</h3>
+            <p id="total-members">0</p>
+        </div>
+
+        <div class="card">
+            <h3>Borrowed</h3>
+            <p id="total-borrowed">0</p>
+        </div>
+    </div>
+</section>
+
+<!-- Books -->
+<section id="books" class="tab hidden">
+    <h2>Books</h2>
+
+    <form id="book-form">
+        <input name="title" placeholder="Book Title" required>
+        <input name="author" placeholder="Author" required>
+        <input name="year" type="number" placeholder="Year" required>
+        <input name="copies" type="number" placeholder="Copies" required>
+        <input name="price" type="number" step="0.01" placeholder="Price" required>
+        <button>Add Book</button>
+    </form>
+
+    <input id="book-search" placeholder="Search books...">
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Copies</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="book-list"></tbody>
+    </table>
+</section>
+
+<!-- Members -->
+<section id="members" class="tab hidden">
+    <h2>Members</h2>
+
+    <form id="member-form">
+        <input name="name" placeholder="Name" required>
+        <input name="email" type="email" placeholder="Email" required>
+        <button>Add Member</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody id="member-list"></tbody>
+    </table>
+</section>
+
+<!-- Issue and Return -->
+<section id="circulation" class="tab hidden">
+    <h2>Issue Book</h2>
+
+    <form id="issue-form">
+        <input name="book_id" type="number" placeholder="Book ID" required>
+        <input name="member_id" type="number" placeholder="Member ID" required>
+        <button>Issue Book</button>
+    </form>
+
+    <h2>Return Book</h2>
+
+    <form id="return-form">
+        <input name="borrowing_id" type="number" placeholder="Borrowing ID" required>
+        <button>Return Book</button>
+    </form>
+
+    <h2>Borrowings</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Book</th>
+                <th>Member</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="borrowing-list"></tbody>
+    </table>
+</section>
+
+<!-- Fines -->
+<section id="fines" class="tab hidden">
+    <h2>Fines</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Member</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="fine-list"></tbody>
+    </table>
+</section>
+
+</main>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
