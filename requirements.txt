@@ -1,8 +1,2 @@
 Flask>=2.0.0
 pandas>=1.3.0
-numpy
-matplotlib
-seaborn
-jupyter
-openpyxl
-mysql-connector-python

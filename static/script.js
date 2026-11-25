@@ -6,31 +6,40 @@ function showTab(id) {
     document.getElementById(id).classList.remove("hidden");
 }
 
+
 // Dashboard
 async function loadStats() {
     const data = await fetch("/api/stats").then(r => r.json());
 
-    document.getElementById("total-books").textContent = data.total_books ?? 0;
-    document.getElementById("total-members").textContent = data.total_members ?? 0;
-    document.getElementById("total-borrowed").textContent = data.total_borrowed ?? 0;
+    document.getElementById("total-books").textContent = data.total_titles;
+    document.getElementById("total-members").textContent = data.active_members;
+    document.getElementById("total-borrowed").textContent = data.currently_issued;
+    document.getElementById("available-copies").textContent = data.available_copies;
 }
 
+
 // Books
-async function loadBooks() {
-    const books = await fetch("/api/books").then(r => r.json());
+async function loadBooks(search = "") {
+    const books = await fetch(`/api/books?search=${encodeURIComponent(search)}`)
+        .then(r => r.json());
 
     document.getElementById("book-list").innerHTML = books.map(b => `
         <tr>
-            <td>${b.id}</td>
+            <td>${b.book_id}</td>
             <td>${b.title}</td>
             <td>${b.author}</td>
-            <td>${b.copies}</td>
-            <td><button onclick="deleteBook(${b.id})">Delete</button></td>
+            <td>${b.category ?? ""}</td>
+            <td>${b.total_copies}</td>
+            <td>${b.available_copies}</td>
+            <td>
+                <button class="delete-book" data-id="${b.book_id}">Delete</button>
+            </td>
         </tr>
     `).join("");
 }
 
-document.getElementById("book-form").onsubmit = async e => {
+
+document.getElementById("book-form").onsubmit = async function(e) {
     e.preventDefault();
 
     const data = Object.fromEntries(new FormData(e.target));
@@ -41,22 +50,35 @@ document.getElementById("book-form").onsubmit = async e => {
         body: JSON.stringify(data)
     });
 
+    const result = await res.json();
+    alert(result.message);
+
     if (res.ok) {
         e.target.reset();
         loadBooks();
         loadStats();
-    } else {
-        alert("Unable to add book");
     }
 };
 
-async function deleteBook(id) {
+
+document.getElementById("book-list").onclick = async function(e) {
+    if (!e.target.classList.contains("delete-book")) return;
+
+    const id = e.target.dataset.id;
+
     if (!confirm("Delete this book?")) return;
 
-    await fetch(`/api/books/${id}`, {method: "DELETE"});
+    const res = await fetch(`/api/books/${encodeURIComponent(id)}`, {
+        method: "DELETE"
+    });
+
+    const result = await res.json();
+    alert(result.message);
+
     loadBooks();
     loadStats();
-}
+};
+
 
 // Members
 async function loadMembers() {
@@ -64,14 +86,16 @@ async function loadMembers() {
 
     document.getElementById("member-list").innerHTML = members.map(m => `
         <tr>
-            <td>${m.id}</td>
-            <td>${m.name}</td>
+            <td>${m.member_id}</td>
+            <td>${m.first_name} ${m.last_name ?? ""}</td>
             <td>${m.email}</td>
+            <td>${m.membership_type}</td>
         </tr>
     `).join("");
 }
 
-document.getElementById("member-form").onsubmit = async e => {
+
+document.getElementById("member-form").onsubmit = async function(e) {
     e.preventDefault();
 
     const data = Object.fromEntries(new FormData(e.target));
@@ -82,17 +106,19 @@ document.getElementById("member-form").onsubmit = async e => {
         body: JSON.stringify(data)
     });
 
+    const result = await res.json();
+    alert(result.message);
+
     if (res.ok) {
         e.target.reset();
         loadMembers();
         loadStats();
-    } else {
-        alert("Unable to add member");
     }
 };
 
-// Issue Book
-document.getElementById("issue-form").onsubmit = async e => {
+
+// Issue book
+document.getElementById("issue-form").onsubmit = async function(e) {
     e.preventDefault();
 
     const data = Object.fromEntries(new FormData(e.target));
@@ -103,18 +129,20 @@ document.getElementById("issue-form").onsubmit = async e => {
         body: JSON.stringify(data)
     });
 
+    const result = await res.json();
+    alert(result.message);
+
     if (res.ok) {
-        alert("Book issued successfully");
         e.target.reset();
         loadBorrowings();
+        loadBooks();
         loadStats();
-    } else {
-        alert("Unable to issue book");
     }
 };
 
-// Return Book
-document.getElementById("return-form").onsubmit = async e => {
+
+// Return book
+document.getElementById("return-form").onsubmit = async function(e) {
     e.preventDefault();
 
     const data = Object.fromEntries(new FormData(e.target));
@@ -125,16 +153,18 @@ document.getElementById("return-form").onsubmit = async e => {
         body: JSON.stringify(data)
     });
 
+    const result = await res.json();
+    alert(result.message);
+
     if (res.ok) {
-        alert("Book returned successfully");
         e.target.reset();
         loadBorrowings();
         loadFines();
+        loadBooks();
         loadStats();
-    } else {
-        alert("Unable to return book");
     }
 };
+
 
 // Borrowings
 async function loadBorrowings() {
@@ -142,13 +172,15 @@ async function loadBorrowings() {
 
     document.getElementById("borrowing-list").innerHTML = data.map(b => `
         <tr>
-            <td>${b.id}</td>
-            <td>${b.book_title ?? b.book_id}</td>
-            <td>${b.member_name ?? b.member_id}</td>
-            <td>${b.status ?? b.returned ?? ""}</td>
+            <td>${b.borrow_id}</td>
+            <td>${b.book_title}</td>
+            <td>${b.member_name}</td>
+            <td>${b.borrow_date}</td>
+            <td>${b.due_date}</td>
         </tr>
     `).join("");
 }
+
 
 // Fines
 async function loadFines() {
@@ -156,50 +188,43 @@ async function loadFines() {
 
     document.getElementById("fine-list").innerHTML = fines.map(f => `
         <tr>
-            <td>${f.id}</td>
-            <td>${f.member_name ?? f.member_id}</td>
-            <td>${f.amount}</td>
-            <td>${f.status ?? f.paid ?? ""}</td>
+            <td>${f.fine_id}</td>
+            <td>${f.member_name}</td>
+            <td>${f.fine_amount}</td>
+            <td>${f.payment_status}</td>
             <td>
-                <button onclick="payFine(${f.id})">Pay</button>
+                ${f.payment_status === "Unpaid"
+                    ? `<button class="pay-fine" data-id="${f.fine_id}">Pay</button>`
+                    : "Paid"}
             </td>
         </tr>
     `).join("");
 }
 
-async function payFine(id) {
-    const res = await fetch(`/api/fines/${id}/pay`, {method: "POST"});
 
-    if (res.ok) {
-        loadFines();
-    } else {
-        alert("Unable to pay fine");
-    }
-}
+document.getElementById("fine-list").onclick = async function(e) {
+    if (!e.target.classList.contains("pay-fine")) return;
 
-// Search Books
-document.getElementById("book-search").oninput = async e => {
-    const text = e.target.value.toLowerCase();
+    const id = e.target.dataset.id;
 
-    const books = await fetch("/api/books").then(r => r.json());
+    const res = await fetch(`/api/fines/${encodeURIComponent(id)}/pay`, {
+        method: "POST"
+    });
 
-    const filtered = books.filter(b =>
-        b.title.toLowerCase().includes(text) ||
-        b.author.toLowerCase().includes(text)
-    );
+    const result = await res.json();
+    alert(result.message);
 
-    document.getElementById("book-list").innerHTML = filtered.map(b => `
-        <tr>
-            <td>${b.id}</td>
-            <td>${b.title}</td>
-            <td>${b.author}</td>
-            <td>${b.copies}</td>
-            <td><button onclick="deleteBook(${b.id})">Delete</button></td>
-        </tr>
-    `).join("");
+    loadFines();
 };
 
-// Load everything
+
+// Search books
+document.getElementById("book-search").oninput = function(e) {
+    loadBooks(e.target.value);
+};
+
+
+// Load data
 loadStats();
 loadBooks();
 loadMembers();

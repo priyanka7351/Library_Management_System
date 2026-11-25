@@ -1,496 +1,363 @@
 import sqlite3
-import os
-import pandas as pd
-from datetime import datetime, date
+from datetime import date, datetime
 
 DB_NAME = "library.db"
 
-def get_connection():
+
+def connect():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
-    # Enforce foreign key constraints at database engine level
-    conn.execute("PRAGMA foreign_keys = ON;")
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
-def init_db():
-    conn = get_connection()
-    cursor = conn.cursor()
 
-    # 1. Books Table with Domain and Integrity Constraints
-    cursor.execute("""
+def init_db():
+    conn = connect()
+
+    conn.executescript("""
     CREATE TABLE IF NOT EXISTS books (
         book_id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
         author TEXT NOT NULL,
-        category TEXT NOT NULL,
-        isbn TEXT NOT NULL,
-        publication_year INTEGER CHECK(publication_year >= 1500),
-        total_copies INTEGER NOT NULL CHECK(total_copies >= 0),
-        available_copies INTEGER NOT NULL CHECK(available_copies >= 0),
-        price REAL NOT NULL CHECK(price >= 0.0)
+        category TEXT,
+        isbn TEXT,
+        publication_year INTEGER,
+        total_copies INTEGER,
+        available_copies INTEGER,
+        price REAL
     );
-    """)
 
-    # 2. Members Table
-    cursor.execute("""
     CREATE TABLE IF NOT EXISTS members (
         member_id TEXT PRIMARY KEY,
         first_name TEXT NOT NULL,
-        last_name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
+        last_name TEXT,
+        email TEXT UNIQUE NOT NULL,
         phone TEXT,
-        membership_type TEXT DEFAULT 'Student' CHECK(membership_type IN ('Student', 'Faculty', 'General', 'Premium')),
-        registration_date TEXT NOT NULL,
-        status TEXT DEFAULT 'Active' CHECK(status IN ('Active', 'Inactive', 'Suspended'))
+        membership_type TEXT,
+        registration_date TEXT,
+        status TEXT DEFAULT 'Active'
     );
-    """)
 
-    # 3. Borrowing Table (Transactions with Foreign Keys)
-    cursor.execute("""
     CREATE TABLE IF NOT EXISTS borrowing (
         borrow_id TEXT PRIMARY KEY,
-        book_id TEXT NOT NULL,
-        member_id TEXT NOT NULL,
-        borrow_date TEXT NOT NULL,
-        due_date TEXT NOT NULL,
+        book_id TEXT,
+        member_id TEXT,
+        borrow_date TEXT,
+        due_date TEXT,
         return_date TEXT,
-        status TEXT DEFAULT 'Issued' CHECK(status IN ('Issued', 'Returned')),
-        FOREIGN KEY (book_id) REFERENCES books(book_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-        FOREIGN KEY (member_id) REFERENCES members(member_id) ON UPDATE CASCADE ON DELETE RESTRICT
+        status TEXT DEFAULT 'Issued',
+        FOREIGN KEY(book_id) REFERENCES books(book_id),
+        FOREIGN KEY(member_id) REFERENCES members(member_id)
     );
-    """)
 
-    # 4. Fines Table
-    cursor.execute("""
     CREATE TABLE IF NOT EXISTS fines (
         fine_id TEXT PRIMARY KEY,
-        borrow_id TEXT NOT NULL,
-        member_id TEXT NOT NULL,
-        fine_amount REAL NOT NULL CHECK(fine_amount >= 0.0),
-        fine_date TEXT NOT NULL,
-        payment_status TEXT DEFAULT 'Unpaid' CHECK(payment_status IN ('Unpaid', 'Paid')),
+        borrow_id TEXT,
+        member_id TEXT,
+        fine_amount REAL,
+        fine_date TEXT,
+        payment_status TEXT DEFAULT 'Unpaid',
         payment_date TEXT,
-        FOREIGN KEY (borrow_id) REFERENCES borrowing(borrow_id) ON DELETE CASCADE,
-        FOREIGN KEY (member_id) REFERENCES members(member_id) ON DELETE RESTRICT
+        FOREIGN KEY(borrow_id) REFERENCES borrowing(borrow_id),
+        FOREIGN KEY(member_id) REFERENCES members(member_id)
     );
-    """)
-
-    # 5. DBMS Relational Views
-    cursor.execute("""
-    CREATE VIEW IF NOT EXISTS v_active_borrowings AS
-    SELECT 
-        b.borrow_id, 
-        b.borrow_date, 
-        b.due_date, 
-        bk.book_id,
-        bk.title AS book_title, 
-        (m.first_name || ' ' || m.last_name) AS member_name,
-        m.email AS member_email
-    FROM borrowing b
-    JOIN books bk ON b.book_id = bk.book_id
-    JOIN members m ON b.member_id = m.member_id
-    WHERE b.status = 'Issued'
-    ORDER BY b.due_date ASC;
-    """)
-
-    cursor.execute("""
-    CREATE VIEW IF NOT EXISTS v_unpaid_fines AS
-    SELECT 
-        f.fine_id, 
-        f.borrow_id, 
-        (m.first_name || ' ' || m.last_name) AS member_name,
-        f.fine_amount, 
-        f.fine_date,
-        b.due_date
-    FROM fines f
-    JOIN members m ON f.member_id = m.member_id
-    JOIN borrowing b ON f.borrow_id = b.borrow_id
-    WHERE f.payment_status = 'Unpaid';
-    """)
-
-    # 6. Database Triggers (DBMS Logic at Database Level)
-    cursor.execute("""
-    CREATE TRIGGER IF NOT EXISTS trg_decrement_stock_on_issue
-    AFTER INSERT ON borrowing
-    WHEN NEW.status = 'Issued'
-    BEGIN
-        UPDATE books 
-        SET available_copies = available_copies - 1
-        WHERE book_id = NEW.book_id;
-    END;
-    """)
-
-    cursor.execute("""
-    CREATE TRIGGER IF NOT EXISTS trg_increment_stock_on_return
-    AFTER UPDATE OF status ON borrowing
-    WHEN NEW.status = 'Returned' AND OLD.status != 'Returned'
-    BEGIN
-        UPDATE books 
-        SET available_copies = available_copies + 1
-        WHERE book_id = NEW.book_id;
-    END;
     """)
 
     conn.commit()
-
-    # Seed data if empty
-    cursor.execute("SELECT COUNT(*) FROM books")
-    if cursor.fetchone()[0] == 0:
-        seed_data(conn)
-
     conn.close()
 
-def seed_data(conn):
-    data_dir = "data"
-    
-    books_path = os.path.join(data_dir, "books.csv")
-    if os.path.exists(books_path):
-        df_books = pd.read_csv(books_path)
-        df_books.to_sql("books", conn, if_exists="append", index=False)
 
-    members_path = os.path.join(data_dir, "members.csv")
-    if os.path.exists(members_path):
-        df_members = pd.read_csv(members_path)
-        df_members.to_sql("members", conn, if_exists="append", index=False)
-
-    borrowing_path = os.path.join(data_dir, "borrowing.csv")
-    if os.path.exists(borrowing_path):
-        df_borrow = pd.read_csv(borrowing_path)
-        df_borrow.to_sql("borrowing", conn, if_exists="append", index=False)
-
-    fines_path = os.path.join(data_dir, "fines.csv")
-    if os.path.exists(fines_path):
-        df_fines = pd.read_csv(fines_path)
-        df_fines.to_sql("fines", conn, if_exists="append", index=False)
-
-# ---------------- Book Functions (CRUD) ----------------
-
+# Books
 def get_all_books(search=""):
-    conn = get_connection()
-    cursor = conn.cursor()
-    if search:
-        query = """
-        SELECT * FROM books 
-        WHERE title LIKE ? OR author LIKE ? OR category LIKE ? OR book_id LIKE ?
-        ORDER BY title ASC
-        """
-        term = f"%{search}%"
-        cursor.execute(query, (term, term, term, term))
-    else:
-        cursor.execute("SELECT * FROM books ORDER BY title ASC")
-    
-    rows = [dict(row) for row in cursor.fetchall()]
+    conn = connect()
+
+    books = conn.execute("""
+        SELECT * FROM books
+        WHERE title LIKE ? OR author LIKE ? OR book_id LIKE ?
+        ORDER BY title
+    """, (f"%{search}%", f"%{search}%", f"%{search}%")).fetchall()
+
     conn.close()
-    return rows
+    return [dict(b) for b in books]
+
 
 def add_new_book(book_id, title, author, category, isbn, year, copies, price):
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("SELECT book_id FROM books WHERE book_id = ?", (book_id,))
-        if cursor.fetchone():
-            return False, f"Duplicate Key: Book ID '{book_id}' already exists in catalog."
-        cursor.execute("SELECT book_id, title FROM books WHERE isbn = ?", (isbn,))
-        existing_isbn = cursor.fetchone()
-        if existing_isbn:
-            return False, f"Unique Constraint: ISBN '{isbn}' is already registered to '{existing_isbn['title']}'."
+    conn = connect()
 
-        cursor.execute("""
-        INSERT INTO books (book_id, title, author, category, isbn, publication_year, total_copies, available_copies, price)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (book_id, title, author, category, isbn, year, copies, copies, price))
+    try:
+        conn.execute("""
+            INSERT INTO books VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (book_id, title, author, category, isbn, year,
+              copies, copies, price))
+
         conn.commit()
-        return True, f"Book '{title}' added successfully!"
-    except sqlite3.IntegrityError as e:
-        return False, f"Integrity Constraint Violation: {str(e)}"
+        return True, "Book added successfully"
+
+    except sqlite3.IntegrityError:
+        return False, "Book ID or ISBN already exists"
+
     finally:
         conn.close()
+
 
 def delete_book(book_id):
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    # 1. Check if currently issued
-    cursor.execute("SELECT COUNT(*) FROM borrowing WHERE book_id = ? AND status = 'Issued'", (book_id,))
-    if cursor.fetchone()[0] > 0:
-        conn.close()
-        return False, "Referential Integrity: Cannot delete a book that is currently issued to active borrower(s)."
-
-    # 2. Check if past loan history exists (Referential Integrity & Audit Trail)
-    cursor.execute("SELECT COUNT(*) FROM borrowing WHERE book_id = ?", (book_id,))
-    if cursor.fetchone()[0] > 0:
-        conn.close()
-        return False, "Referential Integrity (ON DELETE RESTRICT): Book has historical borrowing records and cannot be deleted to preserve the library audit log."
+    conn = connect()
 
     try:
-        cursor.execute("DELETE FROM books WHERE book_id = ?", (book_id,))
+        conn.execute("DELETE FROM books WHERE book_id=?", (book_id,))
         conn.commit()
-        return True, "Book deleted successfully."
-    except sqlite3.IntegrityError as e:
-        return False, f"Referential Integrity Constraint Failed: {str(e)}"
+        return True, "Book deleted"
+
+    except sqlite3.IntegrityError:
+        return False, "This book has borrowing records"
+
     finally:
         conn.close()
 
-# ---------------- Member Functions ----------------
 
+# Members
 def get_all_members():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM members ORDER BY member_id DESC")
-    rows = [dict(row) for row in cursor.fetchall()]
+    conn = connect()
+    members = conn.execute("SELECT * FROM members").fetchall()
     conn.close()
-    return rows
+    return [dict(m) for m in members]
+
 
 def add_new_member(member_id, first_name, last_name, email, phone, membership_type):
-    conn = get_connection()
-    cursor = conn.cursor()
-    today = date.today().strftime("%Y-%m-%d")
-    try:
-        cursor.execute("SELECT member_id FROM members WHERE member_id = ?", (member_id,))
-        if cursor.fetchone():
-            return False, f"Duplicate Key: Member ID '{member_id}' already exists."
-        cursor.execute("SELECT member_id FROM members WHERE email = ?", (email,))
-        if cursor.fetchone():
-            return False, f"Unique Constraint: Email '{email}' is already registered."
+    conn = connect()
 
-        cursor.execute("""
-        INSERT INTO members (member_id, first_name, last_name, email, phone, membership_type, registration_date, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')
-        """, (member_id, first_name, last_name, email, phone, membership_type, today))
+    try:
+        conn.execute("""
+            INSERT INTO members
+            (member_id, first_name, last_name, email, phone,
+             membership_type, registration_date, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')
+        """, (member_id, first_name, last_name, email, phone,
+              membership_type, str(date.today())))
+
         conn.commit()
-        return True, f"Member '{first_name} {last_name}' registered successfully!"
-    except sqlite3.IntegrityError as e:
-        return False, f"Integrity Constraint Violation: {str(e)}"
+        return True, "Member added successfully"
+
+    except sqlite3.IntegrityError:
+        return False, "Member ID or email already exists"
+
     finally:
         conn.close()
 
-# ---------------- ACID Circulation Logic (Issue & Return) ----------------
 
+# Issue book
 def issue_book(book_id, member_id, due_date):
-    """
-    ACID Transaction for Book Issue:
-    1. Validates available stock > 0.
-    2. Validates temporal constraints (due_date > today).
-    3. Prevents duplicate active loan of the same book to the same patron.
-    4. Enforces patron borrowing quota (max 5 active books).
-    5. Blocks borrowing if patron has overdue unpaid fines > $20.00.
-    6. Uses safe monotonic MAX() ID generation to prevent PK collisions.
-    7. Trigger automatically decrements available_copies in books table.
-    8. Commits transaction atomically or rolls back on any error.
-    """
-    conn = get_connection()
-    cursor = conn.cursor()
+    conn = connect()
 
     try:
-        # Check stock availability
-        cursor.execute("SELECT available_copies, title FROM books WHERE book_id = ?", (book_id,))
-        book = cursor.fetchone()
+        book = conn.execute(
+            "SELECT available_copies FROM books WHERE book_id=?",
+            (book_id,)
+        ).fetchone()
+
+        member = conn.execute(
+            "SELECT status FROM members WHERE member_id=?",
+            (member_id,)
+        ).fetchone()
+
         if not book:
-            return False, "Book ID not found in database."
+            return False, "Book not found"
+
         if book["available_copies"] <= 0:
-            return False, f"Integrity Constraint: '{book['title']}' is currently out of stock."
+            return False, "Book is not available"
 
-        # Check member status
-        cursor.execute("SELECT status, first_name, last_name FROM members WHERE member_id = ?", (member_id,))
-        member = cursor.fetchone()
         if not member:
-            return False, "Member ID not found in database."
+            return False, "Member not found"
+
         if member["status"] != "Active":
-            return False, f"Patron status is '{member['status']}'. Only active patrons can borrow books."
+            return False, "Member is not active"
 
-        # Temporal Constraint: Due date cannot be in the past or earlier than today
-        borrow_date_obj = date.today()
-        borrow_date = borrow_date_obj.strftime("%Y-%m-%d")
-        try:
-            due_date_obj = datetime.strptime(due_date, "%Y-%m-%d").date()
-        except ValueError:
-            return False, "Invalid due date format. Expected YYYY-MM-DD."
+        borrow_id = "BR" + str(
+            conn.execute("SELECT COUNT(*) FROM borrowing").fetchone()[0] + 1001
+        )
 
-        if due_date_obj < borrow_date_obj:
-            return False, "Temporal Constraint: Due date cannot be earlier than issue date."
-        
-        if (due_date_obj - borrow_date_obj).days > 365:
-            return False, "Policy Constraint: Maximum loan period cannot exceed 365 days (1 year)."
+        today = str(date.today())
 
-        # Duplicate loan check: Member cannot have 2 active issues of the same title
-        cursor.execute("""
-        SELECT COUNT(*) FROM borrowing 
-        WHERE member_id = ? AND book_id = ? AND status = 'Issued'
-        """, (member_id, book_id))
-        if cursor.fetchone()[0] > 0:
-            return False, f"Duplicate Active Loan: Member already has a copy of '{book['title']}' currently checked out."
+        conn.execute("""
+            INSERT INTO borrowing
+            (borrow_id, book_id, member_id, borrow_date, due_date, status)
+            VALUES (?, ?, ?, ?, ?, 'Issued')
+        """, (borrow_id, book_id, member_id, today, due_date))
 
-        # Patron quota check: Max 5 active loans
-        cursor.execute("SELECT COUNT(*) FROM borrowing WHERE member_id = ? AND status = 'Issued'", (member_id,))
-        active_loans = cursor.fetchone()[0]
-        if active_loans >= 5:
-            return False, "Borrowing Quota Exceeded: Patron already has 5 active borrowed books. Return previous books first."
-
-        # Unpaid overdue fines check: Block borrowing if patron owes > $20.00
-        cursor.execute("SELECT SUM(fine_amount) FROM fines WHERE member_id = ? AND payment_status = 'Unpaid'", (member_id,))
-        unpaid_fines = cursor.fetchone()[0] or 0.0
-        if unpaid_fines > 20.0:
-            return False, f"Circulation Blocked: Patron has ${unpaid_fines:.2f} in unpaid overdue fines. Please clear fines before borrowing."
-
-        # Safe monotonic Borrow ID generation
-        cursor.execute("SELECT MAX(CAST(SUBSTR(borrow_id, 3) AS INTEGER)) FROM borrowing")
-        max_id = cursor.fetchone()[0]
-        next_num = (max_id + 1) if max_id else 1001
-        borrow_id = f"BR{next_num}"
-
-        # Execute insertion (Trigger automatically decrements available_copies)
-        cursor.execute("""
-        INSERT INTO borrowing (borrow_id, book_id, member_id, borrow_date, due_date, status)
-        VALUES (?, ?, ?, ?, ?, 'Issued')
-        """, (borrow_id, book_id, member_id, borrow_date, due_date))
+        conn.execute("""
+            UPDATE books
+            SET available_copies = available_copies - 1
+            WHERE book_id=?
+        """, (book_id,))
 
         conn.commit()
-        return True, f"Transaction committed successfully! Borrow ID: {borrow_id}"
+        return True, "Book issued successfully"
+
     except Exception as e:
         conn.rollback()
-        return False, f"Transaction Aborted (Rollback): {str(e)}"
+        return False, str(e)
+
     finally:
         conn.close()
 
-def return_book(borrow_id, return_date=None, daily_fine=2.0):
-    """
-    ACID Transaction for Book Return & Late Fee Calculation:
-    1. Updates borrowing record to 'Returned'.
-    2. Trigger automatically increments available_copies in books table.
-    3. If returned late, generates penalty in fines table with safe ID.
-    4. Commits transaction atomically.
-    """
-    conn = get_connection()
-    cursor = conn.cursor()
 
-    if not return_date:
-        return_date = date.today().strftime("%Y-%m-%d")
+# Return book
+def return_book(borrow_id, return_date=None, daily_fine=2):
+    conn = connect()
 
     try:
-        cursor.execute("SELECT * FROM borrowing WHERE borrow_id = ?", (borrow_id,))
-        record = cursor.fetchone()
+        record = conn.execute("""
+            SELECT * FROM borrowing WHERE borrow_id=?
+        """, (borrow_id,)).fetchone()
+
         if not record:
-            return False, "Borrow record not found."
+            return False, "Borrowing record not found"
+
         if record["status"] == "Returned":
-            return False, "Idempotency Check: This book has already been returned."
+            return False, "Book already returned"
 
-        member_id = record["member_id"]
-        try:
-            due_date = datetime.strptime(record["due_date"], "%Y-%m-%d").date()
-            borrow_date = datetime.strptime(record["borrow_date"], "%Y-%m-%d").date()
-            ret_date = datetime.strptime(return_date, "%Y-%m-%d").date()
-        except ValueError:
-            return False, "Invalid return date format. Expected YYYY-MM-DD."
+        return_date = return_date or str(date.today())
 
-        if ret_date < borrow_date:
-            return False, "Temporal Constraint: Return date cannot be earlier than borrow date."
+        due = datetime.strptime(record["due_date"], "%Y-%m-%d").date()
+        returned = datetime.strptime(return_date, "%Y-%m-%d").date()
 
-        # Update borrowing status (Trigger will automatically restore stock +1)
-        cursor.execute("""
-        UPDATE borrowing 
-        SET return_date = ?, status = 'Returned' 
-        WHERE borrow_id = ?
+        conn.execute("""
+            UPDATE borrowing
+            SET status='Returned', return_date=?
+            WHERE borrow_id=?
         """, (return_date, borrow_id))
 
-        msg = "Book returned on schedule. Stock restored."
+        conn.execute("""
+            UPDATE books
+            SET available_copies = available_copies + 1
+            WHERE book_id=?
+        """, (record["book_id"],))
 
-        # Calculate late penalty
-        if ret_date > due_date:
-            days_late = (ret_date - due_date).days
-            amount = round(days_late * daily_fine, 2)
+        message = "Book returned successfully"
 
-            cursor.execute("SELECT MAX(CAST(SUBSTR(fine_id, 3) AS INTEGER)) FROM fines")
-            max_fine = cursor.fetchone()[0]
-            next_fnum = (max_fine + 1) if max_fine else 501
-            fine_id = f"FN{next_fnum}"
+        if returned > due:
+            days = (returned - due).days
+            amount = days * daily_fine
 
-            cursor.execute("""
-            INSERT INTO fines (fine_id, borrow_id, member_id, fine_amount, fine_date, payment_status)
-            VALUES (?, ?, ?, ?, ?, 'Unpaid')
-            """, (fine_id, borrow_id, member_id, amount, return_date))
+            fine_id = "FN" + str(
+                conn.execute("SELECT COUNT(*) FROM fines").fetchone()[0] + 501
+            )
 
-            msg = f"Overdue by {days_late} day(s). Penalty of ${amount:.2f} assessed (Fine ID: {fine_id})."
+            conn.execute("""
+                INSERT INTO fines
+                (fine_id, borrow_id, member_id, fine_amount, fine_date)
+                VALUES (?, ?, ?, ?, ?)
+            """, (fine_id, borrow_id, record["member_id"],
+                  amount, return_date))
+
+            message = f"Late return. Fine: {amount}"
 
         conn.commit()
-        return True, msg
+        return True, message
+
     except Exception as e:
         conn.rollback()
-        return False, f"Transaction Aborted (Rollback): {str(e)}"
+        return False, str(e)
+
     finally:
         conn.close()
 
+
+# Borrowing records
 def get_active_borrowings():
-    """Queries the SQL View v_active_borrowings."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM v_active_borrowings")
-    rows = [dict(row) for row in cursor.fetchall()]
+    conn = connect()
+
+    rows = conn.execute("""
+        SELECT b.borrow_id, b.book_id, bk.title AS book_title,
+               b.member_id,
+               m.first_name || ' ' || m.last_name AS member_name,
+               b.borrow_date, b.due_date, b.status
+        FROM borrowing b
+        JOIN books bk ON b.book_id=bk.book_id
+        JOIN members m ON b.member_id=m.member_id
+        WHERE b.status='Issued'
+    """).fetchall()
+
     conn.close()
-    return rows
+    return [dict(r) for r in rows]
 
-# ---------------- Fine Functions ----------------
 
+# Fines
 def get_all_fines():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-    SELECT f.fine_id, f.borrow_id, 
-           (m.first_name || ' ' || m.last_name) AS member_name,
-           f.fine_amount, f.fine_date, f.payment_status, f.payment_date
-    FROM fines f
-    JOIN members m ON f.member_id = m.member_id
-    ORDER BY f.fine_id DESC
-    """)
-    rows = [dict(row) for row in cursor.fetchall()]
+    conn = connect()
+
+    rows = conn.execute("""
+        SELECT f.*, m.first_name || ' ' || m.last_name AS member_name
+        FROM fines f
+        JOIN members m ON f.member_id=m.member_id
+        ORDER BY f.fine_id DESC
+    """).fetchall()
+
     conn.close()
-    return rows
+    return [dict(r) for r in rows]
+
 
 def mark_fine_as_paid(fine_id):
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("SELECT payment_status, fine_amount FROM fines WHERE fine_id = ?", (fine_id,))
-        fine = cursor.fetchone()
-        if not fine:
-            return False, "Fine record not found."
-        if fine["payment_status"] == "Paid":
-            return False, "Idempotency Check: This fine has already been paid and settled."
+    conn = connect()
 
-        today = date.today().strftime("%Y-%m-%d")
-        cursor.execute("""
-        UPDATE fines 
-        SET payment_status = 'Paid', payment_date = ? 
-        WHERE fine_id = ?
-        """, (today, fine_id))
-        conn.commit()
-        return True, f"Fine {fine_id} of ${fine['fine_amount']:.2f} marked as Paid."
-    finally:
+    fine = conn.execute(
+        "SELECT * FROM fines WHERE fine_id=?", (fine_id,)
+    ).fetchone()
+
+    if not fine:
         conn.close()
+        return False, "Fine not found"
 
-# ---------------- Dashboard Stats ----------------
+    if fine["payment_status"] == "Paid":
+        conn.close()
+        return False, "Fine already paid"
 
+    conn.execute("""
+        UPDATE fines
+        SET payment_status='Paid', payment_date=?
+        WHERE fine_id=?
+    """, (str(date.today()), fine_id))
+
+    conn.commit()
+    conn.close()
+    return True, "Fine paid successfully"
+
+
+# Dashboard
 def get_dashboard_stats():
-    conn = get_connection()
-    cursor = conn.cursor()
+    conn = connect()
 
-    cursor.execute("SELECT COUNT(*), SUM(total_copies), SUM(available_copies) FROM books")
-    b_count, b_total, b_avail = cursor.fetchone()
+    total_books = conn.execute(
+        "SELECT COUNT(*) FROM books"
+    ).fetchone()[0]
 
-    cursor.execute("SELECT COUNT(*) FROM members WHERE status = 'Active'")
-    m_count = cursor.fetchone()[0]
+    total_copies = conn.execute(
+        "SELECT SUM(total_copies) FROM books"
+    ).fetchone()[0] or 0
 
-    cursor.execute("SELECT COUNT(*) FROM borrowing WHERE status = 'Issued'")
-    issued_count = cursor.fetchone()[0]
+    available = conn.execute(
+        "SELECT SUM(available_copies) FROM books"
+    ).fetchone()[0] or 0
 
-    cursor.execute("SELECT SUM(fine_amount) FROM fines WHERE payment_status = 'Unpaid'")
-    unpaid = cursor.fetchone()[0] or 0.0
+    members = conn.execute(
+        "SELECT COUNT(*) FROM members WHERE status='Active'"
+    ).fetchone()[0]
+
+    borrowed = conn.execute(
+        "SELECT COUNT(*) FROM borrowing WHERE status='Issued'"
+    ).fetchone()[0]
+
+    fines = conn.execute(
+        "SELECT SUM(fine_amount) FROM fines WHERE payment_status='Unpaid'"
+    ).fetchone()[0] or 0
 
     conn.close()
+
     return {
-        "total_titles": b_count or 0,
-        "total_copies": b_total or 0,
-        "available_copies": b_avail or 0,
-        "active_members": m_count or 0,
-        "currently_issued": issued_count or 0,
-        "unpaid_fines": round(unpaid, 2)
+        "total_titles": total_books,
+        "total_copies": total_copies,
+        "available_copies": available,
+        "active_members": members,
+        "currently_issued": borrowed,
+        "unpaid_fines": fines
     }
